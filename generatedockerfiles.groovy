@@ -20,26 +20,24 @@ createDockerFile new Debian(name: "ubuntu", version: "14.04"), new JavaFlavor(fl
 createDockerFile new Debian(name: "ubuntu", version: "14.04"), new JavaFlavor(flavor: "oracle", version: "7");
 createDockerFile new Debian(name: "ubuntu", version: "14.04"), new JavaFlavor(flavor: "oracle", version: "6");
 
+//Not finished
 //createDockerFile new Debian(name: "centos", version: "6"), new JavaFlavor(flavor: "oracle", version: "6");
 
 @CompileStatic
 public void createDockerFile(LinuxFlavor linuxFlavor, JavaFlavor javaFlavor,
         Maintainer maintainer= new Maintainer(name: "Mikis Seth Sørensen", url: "https://github.com/mikisseth")) {
+    // Initialise image dir
     def dockerFileDirPath = "$DOCKER_FILEDIR/$linuxFlavor-$javaFlavor"
     def Path dockerFileDir = Paths.get DOCKER_FILEDIR, "$linuxFlavor-$javaFlavor";
     Files.createDirectories(dockerFileDir)
 
+    // Create docker files with initial header content
     def dockerFile = new File(dockerFileDirPath, DOCKER_FILE)
     dockerFile.write("# Docker file for running a NetarchiveSuite Quickstart system.\n")
     dockerFile.append("FROM ${linuxFlavor.toStringSemicolon()}\n")
     dockerFile.append("MAINTAINER $maintainer\n", 'UTF-8')
 
-    // Copy supervisor files
-    new File(SCRIPT_DIR).eachFile { File file ->
-        Files.copy(Paths.get(file.getPath()), Paths.get(dockerFileDirPath, file.name),
-                StandardCopyOption.REPLACE_EXISTING)
-    }
-
+    // Concatenate template files into dockerfile
     def fileLocations = [
             "$TEMPLATE_DIR/linuxflavor/setup-${linuxFlavor.template}.docker",
             "$TEMPLATE_DIR/setup-test-user.docker",
@@ -50,10 +48,17 @@ public void createDockerFile(LinuxFlavor linuxFlavor, JavaFlavor javaFlavor,
             "$TEMPLATE_DIR/setup-start-script.docker"]
     fileLocations.each{ dockerFile.append(new File((String)it).getText()) }
 
+    // Create image build script
     def buildFile = new File(dockerFileDir.toFile(), "build.sh")
     buildFile.write("#! /bin/bash\n\n")
     buildFile.append("docker build -t netarchivesuite/$linuxFlavor-$javaFlavor .")
     buildFile.setExecutable(true, true)
+
+    // Copy script files
+    new File(SCRIPT_DIR).eachFile { File file ->
+        Files.copy(Paths.get(file.getPath()), Paths.get(dockerFileDirPath, file.name),
+                StandardCopyOption.REPLACE_EXISTING)
+    }
 
     // Link resource files
     Files.createDirectories(Paths.get(dockerFileDirPath, RESSOURCE_DIR))
