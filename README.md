@@ -34,9 +34,9 @@ Use the build script located in the relevante *docker-files* dir, eg.
 cd docker-files/ubuntu-14.04-oracle-jdk6
 ./build.sh
 ```
-See [Docker builder](http://docs.docker.com/reference/builder/) for further information.
-
 The build image will be tagged as *netarchivesuite/$linuxdist-$javaflavor, eg. *netarchivesuite/ubuntu-14.04-oracle-jdk6*
+
+See [Docker builder](http://docs.docker.com/reference/builder/) for further information.
 
 ## Running quickstart from the Docker images
 
