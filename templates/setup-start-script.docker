@@ -1,0 +1,8 @@
+
+# Startupscript
+ADD startall.sh /root/
+
+EXPOSE 22
+
+# default command
+CMD ["/root/startall.sh"]

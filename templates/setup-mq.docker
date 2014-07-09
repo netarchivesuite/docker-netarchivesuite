@@ -1,0 +1,9 @@
+
+RUN mkdir /root/quickstart-deploy
+RUN mkdir /root/quickstart-deploy/openmq4.5
+ADD resources/mq.sh /root/quickstart-deploy/mq.sh
+ADD resources/openmq4_5_2-binary-Linux_X86.zip /root/quickstart-deploy/openmq4.5/openmq4_5_2-binary-Linux_X86.zip
+RUN cd /root/quickstart-deploy && \
+    chmod u+x mq.sh  && \
+    sh mq.sh install
+

@@ -1,0 +1,8 @@
+ADD resources/NetarchiveSuite-5.0-SNAPSHOT.zip /root/quickstart-deploy/NetarchiveSuite.zip
+ADD resources/RunNetarchiveSuite.sh /root/quickstart-deploy/RunNetarchiveSuite.sh
+ADD resources/deploy_standalone_example.xml /root/quickstart-deploy/deploy_standalone_example.xml
+
+RUN cd /root/quickstart-deploy && chmod u+x RunNetarchiveSuite.sh
+RUN cd /root/quickstart-deploy &&  service ssh start && \
+    ./RunNetarchiveSuite.sh NetarchiveSuite.zip deploy_standalone_example.xml deploy/
+EXPOSE 8074
