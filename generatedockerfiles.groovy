@@ -10,19 +10,17 @@ import java.nio.file.StandardCopyOption
 @Field String RESSOURCE_DIR="resources";
 @Field String DOCKER_FILEDIR="docker-files";
 @Field String TEMPLATE_DIR="templates";
-@Field String SUPERVISOR_DIR="templates/supervisor";
+@Field String SCRIPT_DIR="templates/scripts";
 @Field String DOCKER_FILE="Dockerfile";
 
 downloadResources()
 new File(DOCKER_FILEDIR).deleteDir();
 
-//createDockerFile new Debian(name: "ubuntu"), new JavaFlavor(flavor: "oracle", version: "8");
-//createDockerFile new Debian(name: "ubuntu", version: "14.11"), new JavaFlavor(flavor: "oracle", version: "8");
-//createDockerFile new Debian(name: "ubuntu", version: "14.11"), new JavaFlavor(flavor: "oracle", version: "7");
+createDockerFile new Debian(name: "ubuntu", version: "14.04"), new JavaFlavor(flavor: "oracle", version: "8");
+createDockerFile new Debian(name: "ubuntu", version: "14.04"), new JavaFlavor(flavor: "oracle", version: "7");
 createDockerFile new Debian(name: "ubuntu", version: "14.04"), new JavaFlavor(flavor: "oracle", version: "6");
 
 //createDockerFile new Debian(name: "centos", version: "6"), new JavaFlavor(flavor: "oracle", version: "6");
-//createDockerFile new Debian(name: "centos"), new JavaFlavor(flavor: "oracle", version: "6");
 
 @CompileStatic
 public void createDockerFile(LinuxFlavor linuxFlavor, JavaFlavor javaFlavor,
@@ -37,18 +35,19 @@ public void createDockerFile(LinuxFlavor linuxFlavor, JavaFlavor javaFlavor,
     dockerFile.append("MAINTAINER $maintainer\n", 'UTF-8')
 
     // Copy supervisor files
-    new File(SUPERVISOR_DIR).eachFile { File file ->
+    new File(SCRIPT_DIR).eachFile { File file ->
         Files.copy(Paths.get(file.getPath()), Paths.get(dockerFileDirPath, file.name),
                 StandardCopyOption.REPLACE_EXISTING)
     }
 
     def fileLocations = [
             "$TEMPLATE_DIR/linuxflavor/setup-${linuxFlavor.template}.docker",
-            "$TEMPLATE_DIR/setup-supervisor.docker",
             "$TEMPLATE_DIR/setup-test-user.docker",
             "$TEMPLATE_DIR/javaflavor/setup-${javaFlavor}.docker",
+            "$TEMPLATE_DIR/setup-sshd.docker",
             "$TEMPLATE_DIR/setup-mq.docker",
-            "$TEMPLATE_DIR/setup-netarchivesuite.docker"]
+            "$TEMPLATE_DIR/setup-netarchivesuite.docker",
+            "$TEMPLATE_DIR/setup-start-script.docker"]
     fileLocations.each{ dockerFile.append(new File((String)it).getText()) }
 
     def buildFile = new File(dockerFileDir.toFile(), "build.sh")
@@ -61,23 +60,23 @@ public void createDockerFile(LinuxFlavor linuxFlavor, JavaFlavor javaFlavor,
     new File(RESSOURCE_DIR).eachFile { File file ->
         Files.createLink(Paths.get(dockerFileDirPath, RESSOURCE_DIR, file.name), Paths.get(RESSOURCE_DIR, file.name))
     }
+    println ("Created Dockerfile for $dockerFileDirPath")
 }
 
 private void downloadResources() {
-    def Path resourceDir = Paths.get RESSOURCE_DIR;
+    println "Download shared resources"
+    def resourceDir = Paths.get RESSOURCE_DIR;
     Files.createDirectories(resourceDir)
-    downloadResource("https://sbforge.org/svn/netarchivesuite/trunk/scripts/openmq/mq.sh");
     downloadResource("http://download.java.net/mq/open-mq/4.5.2/latest/openmq4_5_2-binary-Linux_X86.zip");
     downloadResource("https://sbforge.org/jenkins/job/NetarchiveSuite/lastSuccessfulBuild/artifact/deploy/releasezipball/target/NetarchiveSuite-5.0-SNAPSHOT.zip");
     downloadResource("https://raw.githubusercontent.com/netarchivesuite/netarchivesuite/master/deploy/deploy/scripts/RunNetarchiveSuite.sh");
     downloadResource("https://raw.githubusercontent.com/netarchivesuite/netarchivesuite/master/unclassified/examples/deploy_standalone_example.xml");
-    downloadResource("https://sbforge.org/svn/netarchivesuite/trunk/scripts/openmq/mq.sh")
+    downloadResource("https://raw.githubusercontent.com/netarchivesuite/netarchivesuite/master/deploy/deploy/scripts/openmq/mq.sh")
 }
 
 private def downloadResource(String url) {
-    println "Downloading $url"
+    println "  Downloading $url"
     executeOnShell("wget -N -nv $url", new File(RESSOURCE_DIR))
-    return
 }
 
 private def executeOnShell(String command, File workingDir) {
